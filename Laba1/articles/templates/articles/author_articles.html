@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Статті автора</title>
+</head>
+<body>
+    <h1>Пошук статей за автором</h1>
+
+    <form method="get">
+        <label for="author">Введіть ім'я автора:</label>
+        <input type="text" id="author" name="author" value="{{ author_name }}">
+        <button type="submit">Пошук</button>
+    </form>
+
+    {% if author_name %}
+        <h2>Статті автора: {{ author_name }}</h2>
+
+        {% if articles %}
+            {% for article in articles %}
+                <div>
+                    <h3>{{ article.title }}</h3>
+                    <p>{{ article.text }}</p>
+                    <p><b>Дата публікації:</b> {{ article.publication_date }}</p>
+                    <p><b>Автор:</b> {{ article.author }}</p>
+                    <hr>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Статей цього автора не знайдено.</p>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
