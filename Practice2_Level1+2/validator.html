@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Перевірка JSON</title>
+</head>
+<body>
+    <h1>Перевірка JSON</h1>
+
+    <p>Введіть JSON-текст у поле нижче:</p>
+
+    <textarea id="jsonInput" rows="10" cols="60">
+{
+    "name": "Marko",
+    "age": 20,
+    "hobbies": ["programming", "music", "games"]
+}
+    </textarea>
+
+    <br><br>
+
+    <button onclick="checkJson()">Перевірити JSON</button>
+
+    <h2>Результат:</h2>
+    <p id="result"></p>
+
+    <script>
+        function checkJson() {
+            const input = document.getElementById('jsonInput').value;
+            const result = document.getElementById('result');
+
+            try {
+                const parsedJson = JSON.parse(input);
+                result.textContent = 'JSON є дійсним';
+                result.style.color = 'green';
+
+                console.log('Розпарсений JSON:', parsedJson);
+            } catch (error) {
+                result.textContent = 'JSON недійсний';
+                result.style.color = 'red';
+
+                console.log('Помилка:', error.message);
+            }
+        }
+    </script>
+</body>
+</html>

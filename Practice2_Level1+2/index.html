@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Список покупок</title>
+</head>
+<body>
+    <h1>Список покупок</h1>
+
+    <ul id="shopping-list"></ul>
+
+    <script>
+        fetch('shopping.json')
+            .then(response => response.text())
+            .then(data => {
+                const products = JSON.parse(data);
+                const list = document.getElementById('shopping-list');
+
+                products.forEach(product => {
+                    const li = document.createElement('li');
+                    li.textContent = product;
+                    list.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.log('Помилка завантаження JSON:', error);
+            });
+    </script>
+</body>
+</html>
