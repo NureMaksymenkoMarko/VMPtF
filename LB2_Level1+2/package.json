@@ -1,0 +1,13 @@
+﻿{
+  "name": "lb2-level1-2",
+  "version": "1.0.0",
+  "description": "Node.js Express and React task manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "cors": "^2.8.5"
+  }
+}

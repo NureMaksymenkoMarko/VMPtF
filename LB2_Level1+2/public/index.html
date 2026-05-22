@@ -1,0 +1,262 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Менеджер задач</title>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fa;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #243b53;
+        }
+
+        .form {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #eef4fb;
+            border-radius: 10px;
+        }
+
+        input, textarea, select {
+            padding: 10px;
+            font-size: 15px;
+            border: 1px solid #b7c4d1;
+            border-radius: 6px;
+        }
+
+        textarea {
+            min-height: 80px;
+        }
+
+        button {
+            padding: 9px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .delete {
+            background: #dc2626;
+        }
+
+        .delete:hover {
+            background: #b91c1c;
+        }
+
+        .task {
+            border: 1px solid #d4dce5;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            background: #ffffff;
+        }
+
+        .task h3 {
+            margin: 0 0 8px;
+            color: #1e293b;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .details {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            border: 1px solid #86efac;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useEffect, useState } = React;
+
+        function App() {
+            const [tasks, setTasks] = useState([]);
+            const [selectedTask, setSelectedTask] = useState(null);
+            const [editingId, setEditingId] = useState(null);
+
+            const [form, setForm] = useState({
+                title: '',
+                description: '',
+                status: 'Не виконано'
+            });
+
+            function loadTasks() {
+                fetch('/api/tasks')
+                    .then(response => response.json())
+                    .then(data => setTasks(data))
+                    .catch(error => console.log('Помилка завантаження задач:', error));
+            }
+
+            useEffect(() => {
+                loadTasks();
+            }, []);
+
+            function handleChange(event) {
+                const { name, value } = event.target;
+
+                setForm({
+                    ...form,
+                    [name]: value
+                });
+            }
+
+            function clearForm() {
+                setForm({
+                    title: '',
+                    description: '',
+                    status: 'Не виконано'
+                });
+
+                setEditingId(null);
+            }
+
+            function saveTask(event) {
+                event.preventDefault();
+
+                const url = editingId ? '/api/tasks/' + editingId : '/api/tasks';
+                const method = editingId ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(form)
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        clearForm();
+                        loadTasks();
+                    })
+                    .catch(error => console.log('Помилка збереження задачі:', error));
+            }
+
+            function deleteTask(id) {
+                fetch('/api/tasks/' + id, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        setSelectedTask(null);
+                        loadTasks();
+                    })
+                    .catch(error => console.log('Помилка видалення задачі:', error));
+            }
+
+            function editTask(task) {
+                setEditingId(task.id);
+
+                setForm({
+                    title: task.title,
+                    description: task.description,
+                    status: task.status
+                });
+            }
+
+            function showDetails(id) {
+                fetch('/api/tasks/' + id)
+                    .then(response => response.json())
+                    .then(data => setSelectedTask(data))
+                    .catch(error => console.log('Помилка отримання деталей:', error));
+            }
+
+            return (
+                <div className="container">
+                    <h1>Менеджер задач</h1>
+
+                    <form className="form" onSubmit={saveTask}>
+                        <input
+                            type="text"
+                            name="title"
+                            placeholder="Назва задачі"
+                            value={form.title}
+                            onChange={handleChange}
+                        />
+
+                        <textarea
+                            name="description"
+                            placeholder="Опис задачі"
+                            value={form.description}
+                            onChange={handleChange}
+                        ></textarea>
+
+                        <select name="status" value={form.status} onChange={handleChange}>
+                            <option>Не виконано</option>
+                            <option>У процесі</option>
+                            <option>Виконано</option>
+                        </select>
+
+                        <button type="submit">
+                            {editingId ? 'Зберегти зміни' : 'Додати задачу'}
+                        </button>
+                    </form>
+
+                    <h2>Список задач</h2>
+
+                    {tasks.map(task => (
+                        <div className="task" key={task.id}>
+                            <h3>{task.title}</h3>
+                            <p><b>Статус:</b> {task.status}</p>
+
+                            <div className="buttons">
+                                <button onClick={() => showDetails(task.id)}>Деталі</button>
+                                <button onClick={() => editTask(task)}>Редагувати</button>
+                                <button className="delete" onClick={() => deleteTask(task.id)}>Видалити</button>
+                            </div>
+                        </div>
+                    ))}
+
+                    {selectedTask && (
+                        <div className="details">
+                            <h2>Деталі задачі</h2>
+                            <p><b>Назва:</b> {selectedTask.title}</p>
+                            <p><b>Опис:</b> {selectedTask.description}</p>
+                            <p><b>Статус:</b> {selectedTask.status}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
