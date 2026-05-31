@@ -1,0 +1,319 @@
+﻿Міністерство освіти і науки України
+Харківський національний університет радіоелектроніки
+Кафедра програмної інженерії
+
+
+
+
+
+Практичне завдання №3
+з дисципліни: «Високотехнічні мови програмування та фреймворки»
+Тема: «Мобільна розробка на Android з Kotlin»
+
+
+
+
+
+Виконав:
+ст. гр. ПЗПІ-23-7
+Максименко Марко Віталійович
+
+Перевірив:
+ст. викл. Саманцов О. О.
+
+
+
+
+
+Харків 2026
+
+
+3.1 Рівень 1
+      Для виконання практичного завдання було створено мобільний застосунок на Kotlin у середовищі Android Studio. Для першого рівня було обрано завдання 2: реалізувати кнопку, при натисканні на яку буде виводитися повідомлення «Вітаємо з першим додатком на Kotlin!».
+      Проєкт створено як Android-застосунок з використанням Jetpack Compose. Основний код розміщено у файлі MainActivity.kt у пакеті com.example.pz3kotlintodo. У структурі проєкту наявні стандартні каталоги app, manifests, kotlin+java, res та Gradle Scripts.
+
+Рисунок 1 – Структура мобільного проєкту PZ3_Kotlin_ToDo в Android Studio
+     Для опису даних було створено модель TodoTask, яка містить ідентифікатор завдання, його назву та ознаку виконання. Початковий список завдань формується у змінній tasks за допомогою mutableStateListOf. Завдяки цьому інтерфейс автоматично оновлюється після додавання, зміни стану або видалення елементів.
+
+Рисунок 2 – Опис моделі TodoTask у файлі MainActivity.kt
+     Кнопка «Показати привітання» реалізована за допомогою компонента Button. Після натискання викликається Toast.makeText, який виводить на екран повідомлення з потрібним текстом.
+
+Рисунок 3 – Реалізація кнопки привітання в коді
+     Під час перевірки роботи застосунку після натискання кнопки було відображено повідомлення «Вітаємо з першим додатком на Kotlin!».
+
+Рисунок 4 – Виведення повідомлення у мобільному застосунку
+3.2 Рівень 2
+     Для другого рівня було обрано завдання 2: розробити додаток для ведення списку завдань ToDo. Користувач повинен мати можливість додавати завдання та відмічати їх виконаними.
+     Головний екран застосунку містить назву програми, кнопку привітання, поле введення нового завдання, кнопку додавання та список завдань. Для відображення списку використано компонент LazyColumn, а кожне завдання показується у вигляді окремої картки з назвою, статусом, прапорцем виконання та кнопкою видалення.
+
+Рисунок 5 – Стартовий екран мобільного застосунку зі списком завдань
+     Додавання нового завдання виконується після введення тексту у поле «Нове завдання» та натискання кнопки «Додати завдання». Якщо поле не порожнє, до списку додається новий об’єкт TodoTask, для якого автоматично формується унікальний id, а статус виконання встановлюється як false.
+
+Рисунок 6 – Реалізація додавання нового завдання
+
+Рисунок 7 – Додавання нового завдання та його відображення у списку
+     Позначення завдання як виконаного реалізовано через Checkbox. Після натискання прапорця значення поля isDone змінюється на протилежне, а текстовий статус завдання оновлюється на «виконано» або «не виконано».
+
+Рисунок 8 – Код списку завдань, зміни статусу та видалення
+
+Рисунок 9 – Позначення завдання як виконаного
+     Додатково у застосунку реалізовано кнопку «Видалити». Після її натискання вибране завдання прибирається зі списку, а інтерфейс оновлюється без перезапуску застосунку.
+
+Рисунок 10 – Список завдань після видалення одного елемента
+3.3 Код файлу MainActivity.kt
+     Нижче наведено основний код мобільного застосунку. Він містить модель завдання, головний екран TodoApp, список завдань, логіку додавання, видалення, позначення виконання та виведення повідомлення привітання.
+package com.example.pz3kotlintodo
+ 
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+ 
+data class TodoTask(
+    val id: Int,
+    val title: String,
+    val isDone: Boolean
+)
+ 
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+ 
+        setContent {
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    TodoApp()
+                }
+            }
+        }
+    }
+}
+ 
+@Composable
+fun TodoApp() {
+    val context = LocalContext.current
+ 
+    val tasks = remember {
+        mutableStateListOf(
+            TodoTask(
+                id = 1,
+                title = "Підготувати звіт",
+                isDone = false
+            ),
+            TodoTask(
+                id = 2,
+                title = "Перевірити роботу додатку",
+                isDone = false
+            ),
+            TodoTask(
+                id = 3,
+                title = "Завантажити роботу на GitHub",
+                isDone = true
+            )
+        )
+    }
+ 
+    var nextId by remember { mutableIntStateOf(4) }
+    var taskTitle by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+ 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "ToDo-додаток на Kotlin",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+ 
+        Spacer(modifier = Modifier.height(12.dp))
+ 
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                Toast.makeText(
+                    context,
+                    "Вітаємо з першим додатком на Kotlin!",
+                    Toast.LENGTH_SHORT
+                ).show()
+ 
+                message = "Повідомлення було виведено на екран"
+            }
+        ) {
+            Text(text = "Показати привітання")
+        }
+ 
+        Spacer(modifier = Modifier.height(12.dp))
+ 
+        OutlinedTextField(
+            value = taskTitle,
+            onValueChange = {
+                taskTitle = it
+            },
+            label = {
+                Text("Нове завдання")
+            },
+            modifier = Modifier.fillMaxWidth()
+        )
+ 
+        Spacer(modifier = Modifier.height(8.dp))
+ 
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                if (taskTitle.isNotBlank()) {
+                    tasks.add(
+                        TodoTask(
+                            id = nextId,
+                            title = taskTitle,
+                            isDone = false
+                        )
+                    )
+ 
+                    nextId++
+                    taskTitle = ""
+                    message = "Завдання додано"
+                } else {
+                    message = "Введіть текст завдання"
+                }
+            }
+        ) {
+            Text(text = "Додати завдання")
+        }
+ 
+        if (message.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+ 
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+        }
+ 
+        Spacer(modifier = Modifier.height(16.dp))
+ 
+        Text(
+            text = "Список завдань",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+ 
+        Spacer(modifier = Modifier.height(8.dp))
+ 
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(tasks, key = { it.id }) { task ->
+                TodoTaskItem(
+                    task = task,
+                    onDoneChange = {
+                        val index = tasks.indexOf(task)
+ 
+                        tasks[index] = task.copy(
+                            isDone = !task.isDone
+                        )
+ 
+                        message = "Статус завдання змінено"
+                    },
+                    onDelete = {
+                        tasks.remove(task)
+                        message = "Завдання видалено"
+                    }
+                )
+            }
+        }
+    }
+}
+ 
+@Composable
+fun TodoTaskItem(
+    task: TodoTask,
+    onDoneChange: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = task.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+ 
+            Spacer(modifier = Modifier.height(4.dp))
+ 
+            Text(
+                text = if (task.isDone) {
+                    "Статус: виконано"
+                } else {
+                    "Статус: не виконано"
+                }
+            )
+ 
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = task.isDone,
+                    onCheckedChange = {
+                        onDoneChange()
+                    }
+                )
+ 
+                Text(text = "Виконано")
+            }
+ 
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(
+                    onClick = onDelete
+                ) {
+                    Text(text = "Видалити")
+                }
+            }
+        }
+    }
+}
+3.4 Висновки
+     У ході виконання практичного завдання №3 було створено мобільний застосунок на Kotlin для ведення списку завдань ToDo. У застосунку реалізовано кнопку з виведенням повідомлення, додавання нових завдань, відображення списку, позначення завдань як виконаних та видалення завдань зі списку.
+     Під час виконання роботи було закріплено навички роботи з Android Studio, Kotlin, Jetpack Compose, компонентами інтерфейсу, станами Compose та обробкою подій користувача. Розроблений застосунок відповідає вимогам першого та другого рівнів практичного завдання.
+     Посилання на GitHub: https://github.com/NureMaksymenkoMarko/VMPtF
