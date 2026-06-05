@@ -1,0 +1,88 @@
+### Main page
+GET http://localhost:3000
+
+
+### Get users
+GET http://localhost:3000/api/users
+
+
+### Create user
+POST http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com"
+}
+
+
+### Update user
+PUT http://localhost:3000/api/users/1
+Content-Type: application/json
+
+{
+  "name": "Ivan Updated",
+  "email": "ivan_updated@example.com"
+}
+
+
+### Get categories
+GET http://localhost:3000/api/categories
+
+
+### Create category
+POST http://localhost:3000/api/categories
+Content-Type: application/json
+
+{
+  "name": "Books",
+  "description": "Books and notebooks"
+}
+
+
+### Get products
+GET http://localhost:3000/api/products
+
+
+### Create product
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{
+  "title": "Notebook",
+  "description": "Paper notebook",
+  "price": 5,
+  "stock": 100,
+  "categoryId": 1
+}
+
+
+### Get orders
+GET http://localhost:3000/api/orders
+
+
+### Create order
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "productIds": [1, 2],
+  "status": "NEW"
+}
+
+
+### Get reviews
+GET http://localhost:3000/api/reviews
+
+
+### Create review
+POST http://localhost:3000/api/reviews
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "productId": 2,
+  "rating": 4,
+  "comment": "Nice item"
+}
