@@ -1,0 +1,440 @@
+﻿Міністерство освіти і науки України
+Харківський національний університет радіоелектроніки
+Кафедра програмної інженерії
+
+
+
+
+
+Лабораторна робота №4
+з дисципліни: «Високотехнічні мови програмування та фреймворки»
+Тема: «Створення бази даних інтернет-магазину та взаємодія з нею через ORM»
+
+
+
+
+
+Виконав:
+ст. гр. ПЗПІ-23-7
+Максимкенко Марко
+
+Перевірив:
+ст. викл. Саманцов О. О.
+
+
+
+
+Харків 2026
+
+
+4.1 Рівень 1
+     Для виконання лабораторної роботи було обрано предметну область інтернет-магазину. Це відповідає завданню першого рівня, у якому необхідно створити базу даних з п’ятьма таблицями: користувачі, товари, замовлення, категорії та відгуки.
+     Проєкт реалізовано як серверний застосунок на Node.js з використанням Express та Prisma ORM. Як систему керування базою даних використано SQLite, тому база створюється локально у файлі dev.db і не потребує додаткового встановлення окремого серверу баз даних.
+     Основна структура бази даних описана у файлі schema.prisma. У ній створено п’ять основних моделей: User, Category, Product, Order та Review. Модель User відповідає користувачам інтернет-магазину, Category — категоріям товарів, Product — товарам, Order — замовленням, а Review — відгукам користувачів.
+     Між таблицями визначено зв’язки. Один користувач може мати багато замовлень і багато відгуків. Одна категорія може містити багато товарів. Один товар може мати багато відгуків. Також між замовленнями та товарами реалізовано зв’язок багато-до-багатьох, оскільки одне замовлення може містити декілька товарів, а один товар може входити до різних замовлень.
+
+Рисунок 1 – Перевірка валідності схеми Prisma
+     Після створення моделей було виконано перевірку схеми за допомогою Prisma. Схема була успішно завантажена з файлу prisma/schema.prisma та визначена як валідна.
+4.2 Рівень 2
+     Для виконання завдання другого рівня було реалізовано взаємодію з базою даних через ORM. У проєкті використано Prisma Client, який дозволяє створювати, переглядати, оновлювати та видаляти записи у таблицях без написання SQL-запитів вручну.
+     У файлі server.js створено REST API для роботи з усіма основними сутностями інтернет-магазину. Для користувачів, категорій, товарів, замовлень і відгуків реалізовано CRUD-операції. Кожна сутність має маршрути для отримання списку записів, створення нового запису, оновлення існуючого запису та видалення запису.
+     Для перевірки роботи бази було створено seed-файл. Він додає тестових користувачів, категорії, товари, замовлення та відгук. Це дозволяє одразу після запуску проєкту перевірити роботу зв’язків між таблицями та основних запитів API.
+
+Рисунок 2 – Успішне заповнення бази тестовими даними
+     Після запуску seed-файлу у консолі було отримано повідомлення Seed data created successfully, що підтверджує успішне створення початкових даних у базі.
+     Після запуску серверної частини застосунок став доступний за адресою http://localhost:3000. Головний маршрут повертає JSON-відповідь з повідомленням про успішний запуск API.
+
+Рисунок 3 – Перевірка запуску серверного застосунку в браузері
+4.3 Код файлу schema.prisma
+     Нижче наведено код файлу schema.prisma, у якому описано основні таблиці бази даних інтернет-магазину та зв’язки між ними.
+generator client {
+  provider = "prisma-client-js"
+}
+ 
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+ 
+model User {
+  id      Int      @id @default(autoincrement())
+  name    String
+  email   String   @unique
+  orders  Order[]
+  reviews Review[]
+}
+ 
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  products    Product[]
+}
+ 
+model Product {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  price       Float
+  stock       Int
+  categoryId  Int
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  reviews     Review[]
+}
+ 
+model Order {
+  id       Int       @id @default(autoincrement())
+  userId   Int
+  total    Float
+  status   String    @default("NEW")
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+}
+ 
+model Review {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  productId Int
+  rating    Int
+  comment   String?
+ 
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+4.4 Код файлу server.js
+     Нижче наведено основний код серверного застосунку. У ньому реалізовано підключення Express, Prisma Client та маршрути для роботи з користувачами, категоріями, товарами, замовленнями й відгуками.
+require("dotenv").config();
+ 
+const express = require("express");
+const { PrismaClient } = require("@prisma/client");
+ 
+const app = express();
+const prisma = new PrismaClient();
+ 
+app.use(express.json());
+ 
+app.get("/", (req, res) => {
+  res.json({
+    message: "LB4 simple online shop ORM API is running"
+  });
+});
+ 
+app.get("/api/users", async (req, res) => {
+  const users = await prisma.user.findMany({
+    include: {
+      orders: true,
+      reviews: true
+    }
+  });
+ 
+  res.json(users);
+});
+ 
+app.post("/api/users", async (req, res) => {
+  const { name, email } = req.body;
+ 
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email
+    }
+  });
+ 
+  res.status(201).json(user);
+});
+ 
+app.put("/api/users/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, email } = req.body;
+ 
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      name,
+      email
+    }
+  });
+ 
+  res.json(user);
+});
+ 
+app.delete("/api/users/:id", async (req, res) => {
+  const id = Number(req.params.id);
+ 
+  await prisma.user.delete({
+    where: { id }
+  });
+ 
+  res.json({
+    message: "User deleted"
+  });
+});
+ 
+app.get("/api/categories", async (req, res) => {
+  const categories = await prisma.category.findMany({
+    include: {
+      products: true
+    }
+  });
+ 
+  res.json(categories);
+});
+ 
+app.post("/api/categories", async (req, res) => {
+  const { name, description } = req.body;
+ 
+  const category = await prisma.category.create({
+    data: {
+      name,
+      description
+    }
+  });
+ 
+  res.status(201).json(category);
+});
+ 
+app.put("/api/categories/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, description } = req.body;
+ 
+  const category = await prisma.category.update({
+    where: { id },
+    data: {
+      name,
+      description
+    }
+  });
+ 
+  res.json(category);
+});
+ 
+app.delete("/api/categories/:id", async (req, res) => {
+  const id = Number(req.params.id);
+ 
+  await prisma.category.delete({
+    where: { id }
+  });
+ 
+  res.json({
+    message: "Category deleted"
+  });
+});
+ 
+app.get("/api/products", async (req, res) => {
+  const products = await prisma.product.findMany({
+    include: {
+      category: true,
+      orders: true,
+      reviews: true
+    }
+  });
+ 
+  res.json(products);
+});
+ 
+app.post("/api/products", async (req, res) => {
+  const { title, description, price, stock, categoryId } = req.body;
+ 
+  const product = await prisma.product.create({
+    data: {
+      title,
+      description,
+      price: Number(price),
+      stock: Number(stock),
+      categoryId: Number(categoryId)
+    }
+  });
+ 
+  res.status(201).json(product);
+});
+ 
+app.put("/api/products/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { title, description, price, stock, categoryId } = req.body;
+ 
+  const product = await prisma.product.update({
+    where: { id },
+    data: {
+      title,
+      description,
+      price: Number(price),
+      stock: Number(stock),
+      categoryId: Number(categoryId)
+    }
+  });
+ 
+  res.json(product);
+});
+ 
+app.delete("/api/products/:id", async (req, res) => {
+  const id = Number(req.params.id);
+ 
+  await prisma.product.delete({
+    where: { id }
+  });
+ 
+  res.json({
+    message: "Product deleted"
+  });
+});
+ 
+app.get("/api/orders", async (req, res) => {
+  const orders = await prisma.order.findMany({
+    include: {
+      user: true,
+      products: true
+    }
+  });
+ 
+  res.json(orders);
+});
+ 
+app.post("/api/orders", async (req, res) => {
+  const { userId, productIds, status } = req.body;
+ 
+  const products = await prisma.product.findMany({
+    where: {
+      id: {
+        in: productIds.map(Number)
+      }
+    }
+  });
+ 
+  const total = products.reduce((sum, product) => {
+    return sum + product.price;
+  }, 0);
+ 
+  const order = await prisma.order.create({
+    data: {
+      userId: Number(userId),
+      total,
+      status: status || "NEW",
+      products: {
+        connect: productIds.map((id) => ({
+          id: Number(id)
+        }))
+      }
+    },
+    include: {
+      user: true,
+      products: true
+    }
+  });
+ 
+  res.status(201).json(order);
+});
+ 
+app.put("/api/orders/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { userId, productIds, status } = req.body;
+ 
+  const products = await prisma.product.findMany({
+    where: {
+      id: {
+        in: productIds.map(Number)
+      }
+    }
+  });
+ 
+  const total = products.reduce((sum, product) => {
+    return sum + product.price;
+  }, 0);
+ 
+  const order = await prisma.order.update({
+    where: { id },
+    data: {
+      userId: Number(userId),
+      total,
+      status,
+      products: {
+        set: productIds.map((productId) => ({
+          id: Number(productId)
+        }))
+      }
+    },
+    include: {
+      user: true,
+      products: true
+    }
+  });
+ 
+  res.json(order);
+});
+ 
+app.delete("/api/orders/:id", async (req, res) => {
+  const id = Number(req.params.id);
+ 
+  await prisma.order.delete({
+    where: { id }
+  });
+ 
+  res.json({
+    message: "Order deleted"
+  });
+});
+ 
+app.get("/api/reviews", async (req, res) => {
+  const reviews = await prisma.review.findMany({
+    include: {
+      user: true,
+      product: true
+    }
+  });
+ 
+  res.json(reviews);
+});
+ 
+app.post("/api/reviews", async (req, res) => {
+  const { userId, productId, rating, comment } = req.body;
+ 
+  const review = await prisma.review.create({
+    data: {
+      userId: Number(userId),
+      productId: Number(productId),
+      rating: Number(rating),
+      comment
+    }
+  });
+ 
+  res.status(201).json(review);
+});
+ 
+app.put("/api/reviews/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { userId, productId, rating, comment } = req.body;
+ 
+  const review = await prisma.review.update({
+    where: { id },
+    data: {
+      userId: Number(userId),
+      productId: Number(productId),
+      rating: Number(rating),
+      comment
+    }
+  });
+ 
+  res.json(review);
+});
+ 
+app.delete("/api/reviews/:id", async (req, res) => {
+  const id = Number(req.params.id);
+ 
+  await prisma.review.delete({
+    where: { id }
+  });
+ 
+  res.json({
+    message: "Review deleted"
+  });
+});
+ 
+const PORT = process.env.PORT || 3000;
+ 
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+4.5 Висновки
+     У ході виконання лабораторної роботи №4 було створено базу даних інтернет-магазину та реалізовано взаємодію з нею через Prisma ORM. У базі даних створено таблиці користувачів, категорій, товарів, замовлень і відгуків, а також визначено зв’язки між ними.
+     У серверному застосунку реалізовано CRUD-операції для кожної основної сутності. Під час виконання роботи було закріплено навички створення структури бази даних, опису моделей ORM, роботи з Express, Prisma Client та SQLite. Розроблений застосунок відповідає вимогам першого та другого рівнів лабораторної роботи.
+     Посилання на GitHub: https://github.com/NureMaksymenkoMarko/VMPtF/tree/main/LB4_simple_shop_orm
